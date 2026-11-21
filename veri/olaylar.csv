@@ -1,0 +1,9 @@
+id,baslik,onem,durum,varlik,tespit,sorumlu,mudahale_saat
+INC-2611,Muhasebe kullanıcısında fidye yazılımı davranışı,Kritik,Müdahalede,WS-MUH-014,2026-11-21T07:42,SOC Ekip 1,0.4
+INC-2609,VPN'e olağan dışı ülkeden başarılı giriş,Kritik,İnceleniyor,VPN-GW-01,2026-11-20T23:15,SOC Ekip 2,1.1
+INC-2607,Web sunucusunda SQL enjeksiyonu denemesi,Yüksek,Kapatıldı,WEB-PRD-03,2026-11-20T14:05,SOC Ekip 1,3.2
+INC-2604,Yönetici hesabına 1.200 başarısız giriş,Yüksek,Kapatıldı,AD-DC-01,2026-11-19T02:31,SOC Ekip 2,2.6
+INC-2601,Şüpheli PowerShell betiği çalıştırıldı,Yüksek,İnceleniyor,WS-IK-007,2026-11-18T16:50,SOC Ekip 1,5.0
+INC-2598,Hedefli kimlik avı e-postası (CEO taklidi),Orta,Kapatıldı,E-posta,2026-11-17T09:12,SOC Ekip 3,1.8
+INC-2595,Bulut depolamada herkese açık klasör,Orta,Kapatıldı,S3-yedek,2026-11-15T11:40,Bulut Ekibi,4.5
+INC-2590,İç ağda yatay port taraması,Orta,Kapatıldı,10.20.0.0/16,2026-11-12T20:03,SOC Ekip 3,6.1

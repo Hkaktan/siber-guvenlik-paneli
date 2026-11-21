@@ -1,0 +1,6 @@
+gosterge,simdiki,onceki,birim,iyi_yon
+Ortalama tespit süresi (MTTD),3.8,5.1,saat,asagi
+Ortalama müdahale süresi (MTTR),9.4,8.7,saat,asagi
+Yama uyum oranı,87.5,84.0,%,yukari
+Uç nokta koruma kapsamı,96.2,95.8,%,yukari
+MFA kullanan hesaplar,91.0,88.3,%,yukari

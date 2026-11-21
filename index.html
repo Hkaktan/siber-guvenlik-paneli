@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Siber Güvenlik Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
+<style>
+:root {
+  --color-bg: #f6f7f9; --color-panel: #ffffff; --color-fg: #16191f; --color-fg-muted: #5b6270;
+  --color-border-line: #e1e4ea; --color-ok: #1a7f4b; --color-warn: #b86e00; --color-bad: #c62f3a;
+  --accent: #2f5fd0;
+  --font-anthropic-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-anthropic-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --cds-font-size-caption: 12px; --cds-font-size-body: 14px; --cds-font-size-heading: 16px; --cds-font-size-title: 30px;
+  --cds-font-weight-medium: 600;
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 16px; --cds-gap-xl: 28px;
+  --cds-pad-md: 12px; --cds-pad-lg: 18px; --cds-radius: 10px;
+  --cds-chart-muted: #c3c8d2; --cds-chart-grid: #eceef2; --cds-chart-axis: #c9ced8; --cds-chart-reference: #6f8fd8;
+  --cds-chart-status-critical: var(--color-bad); --cds-text-secondary: #5b6270;
+  --cds-surface-popover: #ffffff; --cds-border: #d6dae2; --cds-shadow-popover: 0 6px 20px rgba(20,25,35,.14);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f1216; --color-panel: #171b21; --color-fg: #e8eaee; --color-fg-muted: #9aa2b1;
+    --color-border-line: #2a3038; --color-ok: #4cc38a; --color-warn: #f0a63a; --color-bad: #ff6b72;
+    --accent: #7ea2ff; --cds-chart-muted: #4a515d; --cds-chart-grid: #232830; --cds-chart-axis: #3a414c;
+    --cds-chart-reference: #6f8fd8; --cds-text-secondary: #9aa2b1;
+    --cds-surface-popover: #1e232b; --cds-border: #343b46; --cds-shadow-popover: 0 6px 20px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+}
+html, body { margin: 0; background: var(--color-bg); color: var(--color-fg); font: 14px/1.45 var(--font-anthropic-sans); }
+#dash-root { max-width: 1180px; margin: 0 auto; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px)); }
+.dash-select { font: inherit; color: var(--color-fg); background-color: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 8px; padding: 6px 10px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+// Panelin claude.ai dışında çalışması için küçük bir uyarlama katmanı:
+// veriler aşağıdaki CSV metinlerinden okunur.
+(function () {
+  const RAW = {"uyarilar": "tarih,kritik,yuksek,orta,dusuk\n2026-10-23,1,12,62,125\n2026-10-24,1,8,30,91\n2026-10-25,3,7,43,67\n2026-10-26,1,13,58,124\n2026-10-27,5,21,46,145\n2026-10-28,2,23,79,136\n2026-10-29,2,19,62,161\n2026-10-30,1,24,55,154\n2026-10-31,2,10,37,71\n2026-11-01,1,14,39,69\n2026-11-02,1,18,51,132\n2026-11-03,3,21,61,161\n2026-11-04,1,23,74,144\n2026-11-05,1,26,69,115\n2026-11-06,5,16,68,146\n2026-11-07,1,13,29,67\n2026-11-08,1,14,37,69\n2026-11-09,4,60,51,134\n2026-11-10,7,45,68,120\n2026-11-11,3,17,58,152\n2026-11-12,3,23,49,148\n2026-11-13,2,20,60,120\n2026-11-14,2,10,37,101\n2026-11-15,3,9,39,97\n2026-11-16,1,15,47,161\n2026-11-17,3,18,62,114\n2026-11-18,2,26,65,123\n2026-11-19,4,18,74,119\n2026-11-20,3,14,60,157\n2026-11-21,3,12,36,94\n", "saldiri_turleri": "tur,adet\nKimlik avı (phishing),412\nKaba kuvvet / parola deneme,287\nZararlı yazılım,164\nPort tarama,141\nWeb uygulama saldırısı (SQLi/XSS),96\nVeri sızdırma şüphesi,14\nFidye yazılımı girişimi,9\n", "olaylar": "id,baslik,onem,durum,varlik,tespit,sorumlu,mudahale_saat\nINC-2611,Muhasebe kullanıcısında fidye yazılımı davranışı,Kritik,Müdahalede,WS-MUH-014,2026-11-21T07:42,SOC Ekip 1,0.4\nINC-2609,VPN'e olağan dışı ülkeden başarılı giriş,Kritik,İnceleniyor,VPN-GW-01,2026-11-20T23:15,SOC Ekip 2,1.1\nINC-2607,Web sunucusunda SQL enjeksiyonu denemesi,Yüksek,Kapatıldı,WEB-PRD-03,2026-11-20T14:05,SOC Ekip 1,3.2\nINC-2604,Yönetici hesabına 1.200 başarısız giriş,Yüksek,Kapatıldı,AD-DC-01,2026-11-19T02:31,SOC Ekip 2,2.6\nINC-2601,Şüpheli PowerShell betiği çalıştırıldı,Yüksek,İnceleniyor,WS-IK-007,2026-11-18T16:50,SOC Ekip 1,5.0\nINC-2598,Hedefli kimlik avı e-postası (CEO taklidi),Orta,Kapatıldı,E-posta,2026-11-17T09:12,SOC Ekip 3,1.8\nINC-2595,Bulut depolamada herkese açık klasör,Orta,Kapatıldı,S3-yedek,2026-11-15T11:40,Bulut Ekibi,4.5\nINC-2590,İç ağda yatay port taraması,Orta,Kapatıldı,10.20.0.0/16,2026-11-12T20:03,SOC Ekip 3,6.1\n", "zafiyetler": "onem,acik,son30_kapatilan,sla_gun,sla_asan\nKritik,7,18,7,2\nYüksek,34,61,30,9\nOrta,128,140,60,21\nDüşük,263,95,90,40\n", "gostergeler": "gosterge,simdiki,onceki,birim,iyi_yon\nOrtalama tespit süresi (MTTD),3.8,5.1,saat,asagi\nOrtalama müdahale süresi (MTTR),9.4,8.7,saat,asagi\nYama uyum oranı,87.5,84.0,%,yukari\nUç nokta koruma kapsamı,96.2,95.8,%,yukari\nMFA kullanan hesaplar,91.0,88.3,%,yukari\n"};
+  const src = {};
+  for (const k in RAW) src[k] = d3.csvParse(RAW[k]);
+  const calcs = {}, draws = [];
+  window.dash = {
+    colors: ['var(--accent)', 'var(--color-warn)', 'var(--color-ok)', 'var(--color-bad)'],
+    data(id) {
+      if (calcs[id]) { const c = calcs[id]; return { status: 'ok', data: c.fn(...c.inputs.map((i) => src[i])) }; }
+      return src[id] ? { status: 'ok', data: src[id] } : { status: 'missing', data: [] };
+    },
+    calc(id, o) { calcs[id] = o; },
+    draw(name, fn) {
+      if (fn) { draws.push([name, fn]); return; }
+      draws.filter((d) => d[0] === name).forEach(run);
+    },
+    _runAll() { draws.forEach(run); }
+  };
+  function run([name, fn]) { document.querySelectorAll('[data-draw="' + name + '"]').forEach((el) => fn(el)); }
+  let w = 0, t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { if (innerWidth !== w) { w = innerWidth; dash._runAll(); } }, 120); });
+  window.addEventListener('load', () => { w = innerWidth; dash._runAll(); });
+})();
+</script>
+</head>
+<body>
+<div id="dash-root">
+<style>
+.sg { display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); color: var(--color-fg); }
+.sg-head h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0 0 var(--cds-gap-xs); text-wrap: balance; }
+.sg-take { margin: 0; color: var(--color-fg-muted); max-width: 68ch; line-height: 1.5; }
+.sg-take b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); font-variant-numeric: tabular-nums; }
+.sg-eyebrow { font-size: var(--cds-font-size-caption); letter-spacing: .06em; text-transform: uppercase; color: var(--color-fg-muted); margin: 0 0 var(--cds-gap-xs); }
+.sg-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--cds-gap-md); min-height: 96px; }
+.sg-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md) var(--cds-pad-lg); display: grid; gap: var(--cds-gap-xs); align-content: start; }
+.sg-tile-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.sg-tile-value { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sg-tile-unit { font-size: var(--cds-font-size-body); color: var(--color-fg-muted); margin-left: 3px; font-family: var(--font-anthropic-sans); }
+.sg-tile-delta { font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.sg-good { color: var(--color-ok); } .sg-bad { color: var(--color-bad); }
+.sg-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: var(--cds-gap-lg); }
+.sg-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); min-width: 0; display: grid; gap: var(--cds-gap-sm); align-content: start; }
+.sg-card h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; text-wrap: balance; }
+.sg-sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; }
+.sg-chart { position: relative; min-height: 240px; }
+.sg-chart svg { display: block; width: 100%; overflow: visible; }
+.sg-chart .tick text, .sg-chart .sg-lbl { fill: var(--cds-text-secondary); font-size: var(--cds-font-size-caption); font-family: var(--font-anthropic-sans); }
+.sg-chart .tick line { stroke: var(--cds-chart-grid); }
+.sg-chart .domain { stroke: var(--cds-chart-axis); }
+.sg-val { fill: var(--color-fg); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.sg-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: 8px 10px; font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 5; font-variant-numeric: tabular-nums; }
+.sg-tip div { display: flex; gap: 8px; align-items: center; }
+.sg-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; padding: 0; list-style: none; }
+.sg-legend li { display: flex; align-items: center; gap: 6px; }
+.sg-sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex: none; }
+.sg-sw-k { background: var(--color-bad); } .sg-sw-y { background: var(--color-warn); } .sg-sw-o { background: var(--sg-orta); } .sg-sw-d { background: var(--cds-chart-muted); }
+.sg { --sg-orta: var(--cds-chart-reference); }
+.sg-tablewrap { overflow-x: auto; }
+.sg table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-body); font-variant-numeric: tabular-nums; }
+.sg th { text-align: left; font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); padding: 8px 10px; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.sg td { padding: 9px 10px; border-bottom: 1px solid var(--color-border-line); vertical-align: top; }
+.sg tr:last-child td { border-bottom: 0; }
+.sg .num { text-align: right; }
+.sg-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); border: 1px solid currentColor; white-space: nowrap; }
+.sg-pill-Kritik { color: var(--color-bad); } .sg-pill-Yüksek { color: var(--color-warn); } .sg-pill-Orta, .sg-pill-Düşük { color: var(--color-fg-muted); }
+.sg-st { white-space: nowrap; font-size: var(--cds-font-size-caption); }
+.sg-st::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--color-fg-muted); vertical-align: 1px; }
+.sg-st-Müdahalede::before { background: var(--color-bad); } .sg-st-İnceleniyor::before { background: var(--color-warn); } .sg-st-Kapatıldı::before { background: var(--color-ok); }
+.sg-muted { color: var(--color-fg-muted); }
+.sg-tablehead { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); justify-content: space-between; align-items: end; }
+.sg-mini { display: inline-block; height: 6px; border-radius: 3px; background: var(--cds-chart-muted); vertical-align: middle; margin-left: 8px; }
+.sg-mini-Kritik { background: var(--color-bad); } .sg-mini-Yüksek { background: var(--color-warn); }
+.sg-err { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: var(--cds-pad-md) 0; }
+.sg details summary { cursor: pointer; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.sg details p { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); max-width: 70ch; line-height: 1.5; }
+</style>
+
+<div class="sg" lang="tr">
+  <header class="sg-head" id="ozet">
+    <p class="sg-eyebrow">Güvenlik Operasyon Merkezi · Son 30 gün · Örnek veri</p>
+    <h1>Siber Güvenlik Paneli</h1>
+    <p class="sg-take" data-read lang="tr">Son 30 günde <b data-draw="tot" data-source="uyari_ozet" data-field="toplam" data-row="0">—</b> güvenlik uyarısı üretildi; bunların <b data-draw="krit" data-source="uyari_ozet" data-field="kritik" data-row="0">—</b> tanesi kritik. Son 7 günün uyarı hacmi önceki haftaya göre <b data-draw="chg" data-source="uyari_ozet" data-field="degisim" data-row="0">—</b>. Şu an <b data-draw="openk" data-source="olay_ozet" data-field="acik_kritik" data-row="0">—</b> kritik olay açık.</p>
+  </header>
+
+  <section id="gostergeler" aria-label="Temel göstergeler">
+    <div class="sg-kpis" data-draw="kpis" data-source="gostergeler">—</div>
+  </section>
+
+  <div class="sg-grid2">
+    <section class="sg-card" id="uyari-trendi">
+      <h2>Günlük uyarılar, önem derecesine göre</h2>
+      <p class="sg-sub">SIEM'e düşen tüm uyarılar, son 30 gün</p>
+      <ul class="sg-legend">
+        <li><span class="sg-sw sg-sw-k"></span>Kritik</li>
+        <li><span class="sg-sw sg-sw-y"></span>Yüksek</li>
+        <li><span class="sg-sw sg-sw-o"></span>Orta</li>
+        <li><span class="sg-sw sg-sw-d"></span>Düşük</li>
+      </ul>
+      <div class="sg-chart" data-draw="trend" data-source="uyarilar">—</div>
+    </section>
+
+    <section class="sg-card" id="saldiri-turleri">
+      <h2>Saldırı türleri</h2>
+      <p class="sg-sub">Sınıflandırılmış olay sayısı, son 30 gün</p>
+      <div class="sg-chart" data-draw="types" data-source="saldiri_turleri">—</div>
+    </section>
+  </div>
+
+  <section class="sg-card" id="olaylar">
+    <div class="sg-tablehead">
+      <div>
+        <h2>Son olaylar</h2>
+        <p class="sg-sub">Analist tarafından açılan olay kayıtları</p>
+      </div>
+      <select class="dash-select" id="sg-sev" aria-label="Önem derecesine göre süz">
+        <option value="">Tüm önem dereceleri</option>
+        <option value="Kritik">Kritik</option>
+        <option value="Yüksek">Yüksek</option>
+        <option value="Orta">Orta</option>
+      </select>
+    </div>
+    <div class="sg-tablewrap">
+      <table data-source="olaylar" data-row-key="id">
+        <thead><tr>
+          <th data-field="id">Kayıt</th>
+          <th data-field="baslik">Olay</th>
+          <th data-field="onem">Önem</th>
+          <th data-field="durum">Durum</th>
+          <th data-field="varlik">Etkilenen varlık</th>
+          <th data-field="tespit">Tespit</th>
+          <th data-field="sorumlu">Sorumlu</th>
+          <th data-field="mudahale_saat" class="num">Müdahale (saat)</th>
+        </tr></thead>
+        <tbody data-draw="incidents"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sg-card" id="zafiyetler">
+    <h2>Açık zafiyetler ve SLA durumu</h2>
+    <p class="sg-sub">Zafiyet tarayıcısındaki açık bulgular; SLA, önem derecesine göre izin verilen kapatma süresi</p>
+    <div class="sg-tablewrap">
+      <table data-source="zafiyetler" data-row-key="onem">
+        <thead><tr>
+          <th data-field="onem">Önem</th>
+          <th data-field="acik" class="num">Açık</th>
+          <th data-field="son30_kapatilan" class="num">Son 30 günde kapatılan</th>
+          <th data-field="sla_gun" class="num">SLA (gün)</th>
+          <th data-field="sla_asan" class="num">SLA'yı aşan</th>
+        </tr></thead>
+        <tbody data-draw="vulns"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details>
+    <summary>Terimler</summary>
+    <p><b>MTTD</b> (ortalama tespit süresi): bir saldırının başlamasından güvenlik ekibinin fark etmesine kadar geçen ortalama süre. <b>MTTR</b> (ortalama müdahale süresi): tespitten olayın kontrol altına alınmasına kadar geçen ortalama süre. <b>SLA'yı aşan</b>: izin verilen kapatma süresini geçmiş açık zafiyetler. Bu paneldeki tüm rakamlar örnek veridir.</p>
+  </details>
+</div>
+
+<script>
+window.sgTR = d3.formatLocale({ decimal: ",", thousands: ".", grouping: [3], currency: ["₺", ""] });
+window.sgTime = d3.timeFormatLocale({
+  dateTime: "%e %B %Y %X", date: "%d.%m.%Y", time: "%H:%M:%S", periods: ["", ""],
+  days: ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"],
+  shortDays: ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"],
+  months: ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"],
+  shortMonths: ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"]
+});
+window.sgInt = sgTR.format(",d");
+window.sgDec = sgTR.format(",.1f");
+
+dash.calc('uyari_ozet', {
+  title: 'Uyarı özeti',
+  description: 'Son 30 günün toplam ve kritik uyarıları, son 7 günün önceki 7 güne göre değişimi (%).',
+  inputs: ['uyarilar'],
+  fn: (uyarilar) => {
+    const top = (r) => Number(r.kritik) + Number(r.yuksek) + Number(r.orta) + Number(r.dusuk);
+    const sum = (rows, f) => rows.reduce((a, r) => a + f(r), 0);
+    const n = uyarilar.length;
+    const son7 = sum(uyarilar.slice(n - 7), top);
+    const onceki7 = sum(uyarilar.slice(n - 14, n - 7), top);
+    return [{
+      toplam: sum(uyarilar, top),
+      kritik: sum(uyarilar, (r) => Number(r.kritik)),
+      son7, onceki7,
+      degisim: onceki7 ? Math.round((son7 - onceki7) / onceki7 * 1000) / 10 : null
+    }];
+  }
+});
+
+dash.calc('olay_ozet', {
+  title: 'Açık olaylar',
+  description: 'Durumu "Kapatıldı" olmayan olay kayıtlarının sayısı.',
+  inputs: ['olaylar'],
+  fn: (olaylar) => {
+    const acik = olaylar.filter((r) => r.durum !== 'Kapatıldı');
+    return [{ acik: acik.length, acik_kritik: acik.filter((r) => r.onem === 'Kritik').length }];
+  }
+});
+
+function sgOne(id, field, fmt) {
+  return (el) => {
+    const d = dash.data(id);
+    if (d.status !== 'ok' || !d.data || !d.data.length || d.data[0][field] == null) { el.textContent = '—'; return; }
+    el.textContent = fmt(d.data[0][field]);
+  };
+}
+dash.draw('tot', sgOne('uyari_ozet', 'toplam', (v) => sgInt(v)));
+dash.draw('krit', sgOne('uyari_ozet', 'kritik', (v) => sgInt(v)));
+dash.draw('openk', sgOne('olay_ozet', 'acik_kritik', (v) => sgInt(v)));
+dash.draw('chg', (el) => {
+  const d = dash.data('uyari_ozet');
+  if (d.status !== 'ok' || !d.data || !d.data.length || d.data[0].degisim == null) { el.textContent = '—'; return; }
+  const v = d.data[0].degisim;
+  el.textContent = v === 0 ? 'değişmedi' : '%' + sgDec(Math.abs(v)) + (v > 0 ? ' arttı' : ' azaldı');
+});
+</script>
+
+<script>
+dash.draw('kpis', (el) => {
+  const d = dash.data('gostergeler');
+  el.replaceChildren();
+  if (d.status !== 'ok') { el.textContent = d.status === 'error' ? 'Göstergeler yüklenemedi.' : '—'; return; }
+  d.data.forEach((r, i) => {
+    const cur = Number(r.simdiki), prev = Number(r.onceki);
+    const diff = cur - prev;
+    const good = r.iyi_yon === 'asagi' ? diff < 0 : diff > 0;
+    const tile = document.createElement('div'); tile.className = 'sg-tile';
+    const lab = document.createElement('div'); lab.className = 'sg-tile-label'; lab.textContent = r.gosterge;
+    const val = document.createElement('div'); val.className = 'sg-tile-value';
+    const num = document.createElement('span');
+    num.dataset.source = 'gostergeler'; num.dataset.field = 'simdiki'; num.dataset.row = String(i);
+    num.textContent = r.birim === '%' ? '%' + sgDec(cur) : sgDec(cur);
+    val.append(num);
+    if (r.birim !== '%') { const u = document.createElement('span'); u.className = 'sg-tile-unit'; u.textContent = r.birim; val.append(u); }
+    const del = document.createElement('div');
+    del.className = 'sg-tile-delta ' + (diff === 0 ? 'sg-muted' : good ? 'sg-good' : 'sg-bad');
+    const unit = r.birim === '%' ? ' puan' : ' ' + r.birim;
+    del.textContent = (diff > 0 ? '▲ +' : diff < 0 ? '▼ −' : '') + sgDec(Math.abs(diff)) + unit + ' · önceki 30 güne göre';
+    tile.append(lab, val, del);
+    el.append(tile);
+  });
+});
+</script>
+
+<script>
+dash.draw('trend', (el) => {
+  const d = dash.data('uyarilar');
+  el.replaceChildren();
+  if (d.status !== 'ok') { el.textContent = d.status === 'error' ? 'Uyarı verisi yüklenemedi.' : '—'; return; }
+  const keys = [['kritik','Kritik','var(--color-bad)'],['yuksek','Yüksek','var(--color-warn)'],['orta','Orta','var(--sg-orta)'],['dusuk','Düşük','var(--cds-chart-muted)']];
+  const parse = d3.utcParse('%Y-%m-%d');
+  const rows = d.data.map((r) => { const o = { date: parse(r.tarih) }; keys.forEach(([k]) => o[k] = Number(r[k]) || 0); o.total = keys.reduce((a,[k]) => a + o[k], 0); return o; });
+  const W = el.clientWidth || 600, H = 240, m = { t: 8, r: 4, b: 24, l: 34 };
+  const x = d3.scaleBand().domain(rows.map((r) => r.date)).range([m.l, W - m.r]).padding(0.18);
+  const y = d3.scaleLinear().domain([0, d3.max(rows, (r) => r.total) || 1]).nice().range([H - m.b, m.t]);
+  const stack = d3.stack().keys(keys.map((k) => k[0]))(rows);
+  const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H).attr('role', 'img')
+    .attr('aria-label', 'Son 30 günün günlük uyarı sayıları, kritik, yüksek, orta ve düşük olarak yığılmış sütunlar');
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4).tickSize(-(W - m.l - m.r)).tickFormat(sgInt))
+    .call((g) => g.select('.domain').remove());
+  const fmtTick = sgTime.utcFormat('%e %b');
+  const every = Math.ceil(rows.length / Math.max(2, Math.floor((W - m.l) / 70)));
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`)
+    .call(d3.axisBottom(x).tickValues(rows.filter((_, i) => (rows.length - 1 - i) % every === 0).map((r) => r.date)).tickFormat(fmtTick).tickSize(0).tickPadding(8));
+  stack.forEach((s, i) => {
+    svg.append('g').selectAll('rect').data(s).join('rect')
+      .attr('x', (p) => x(p.data.date)).attr('width', x.bandwidth())
+      .attr('y', (p) => y(p[1])).attr('height', (p) => Math.max(0, y(p[0]) - y(p[1])))
+      .style('fill', keys[i][2]);
+  });
+  const tip = document.createElement('div'); tip.className = 'sg-tip'; tip.hidden = true; el.append(tip);
+  const fmtFull = sgTime.utcFormat('%e %B %Y, %A');
+  svg.append('g').selectAll('rect').data(rows).join('rect')
+    .attr('x', (r) => x(r.date) - x.step() * x.paddingInner() / 2).attr('width', x.step())
+    .attr('y', m.t).attr('height', H - m.t - m.b).style('fill', 'transparent')
+    .on('pointerenter pointermove', (ev, r) => {
+      tip.replaceChildren();
+      const h = document.createElement('strong'); h.textContent = fmtFull(r.date); tip.append(h);
+      keys.forEach(([k, lab, c]) => { const row = document.createElement('div'); const sw = document.createElement('span'); sw.className = 'sg-sw'; sw.style.background = c; const t = document.createElement('span'); t.textContent = `${lab}: ${sgInt(r[k])}`; row.append(sw, t); tip.append(row); });
+      const tt = document.createElement('div'); tt.textContent = `Toplam: ${sgInt(r.total)}`; tip.append(tt);
+      tip.hidden = false;
+      const [px] = d3.pointer(ev, el);
+      const tw = tip.offsetWidth;
+      tip.style.left = Math.min(Math.max(0, px + 12), el.clientWidth - tw) + 'px';
+      tip.style.top = '8px';
+    })
+    .on('pointerleave', () => { tip.hidden = true; });
+});
+</script>
+
+<script>
+dash.draw('types', (el) => {
+  const d = dash.data('saldiri_turleri');
+  el.replaceChildren();
+  if (d.status !== 'ok') { el.textContent = d.status === 'error' ? 'Saldırı türleri yüklenemedi.' : '—'; return; }
+  const rows = d.data.map((r) => ({ tur: r.tur, adet: Number(r.adet) })).sort((a, b) => b.adet - a.adet);
+  const W = el.clientWidth || 500, rowH = 34, H = rows.length * rowH;
+  const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H).attr('role', 'img')
+    .attr('aria-label', 'Saldırı türlerine göre olay sayıları, yatay çubuklar');
+  const valW = 44;
+  const x = d3.scaleLinear().domain([0, d3.max(rows, (r) => r.adet) || 1]).range([0, Math.max(40, W - valW)]);
+  const g = svg.selectAll('g').data(rows).join('g').attr('transform', (_, i) => `translate(0,${i * rowH})`);
+  g.append('text').attr('class', 'sg-lbl').attr('x', 0).attr('y', 11).text((r) => r.tur);
+  g.append('rect').attr('x', 0).attr('y', 16).attr('height', 10).attr('rx', 2)
+    .attr('width', (r) => Math.max(2, x(r.adet)))
+    .style('fill', (r) => /Fidye|sızdırma/.test(r.tur) ? 'var(--cds-chart-status-critical)' : dash.colors[0]);
+  g.append('text').attr('class', 'sg-val').attr('x', (r) => Math.max(2, x(r.adet)) + 6).attr('y', 25).text((r) => sgInt(r.adet));
+});
+</script>
+
+<script>
+window.sgSev = '';
+document.querySelectorAll('#sg-sev').forEach((s) => s.addEventListener('change', () => { window.sgSev = s.value; dash.draw('incidents'); }));
+
+dash.draw('incidents', (tb) => {
+  const d = dash.data('olaylar');
+  tb.replaceChildren();
+  if (d.status !== 'ok') {
+    const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 8; td.className = 'sg-err';
+    td.textContent = d.status === 'error' ? 'Olay kayıtları yüklenemedi.' : 'Yükleniyor…'; tr.append(td); tb.append(tr); return;
+  }
+  const parse = d3.timeParse('%Y-%m-%dT%H:%M');
+  const fmt = sgTime.format('%e %b %H:%M');
+  const rows = d.data.filter((r) => !window.sgSev || r.onem === window.sgSev);
+  if (!rows.length) { const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 8; td.className = 'sg-err'; td.textContent = 'Bu önem derecesinde olay yok.'; tr.append(td); tb.append(tr); return; }
+  rows.forEach((r) => {
+    const tr = document.createElement('tr');
+    const cell = (txt, cls) => { const td = document.createElement('td'); if (cls) td.className = cls; td.textContent = txt; tr.append(td); return td; };
+    cell(r.id, 'sg-muted');
+    cell(r.baslik);
+    const s = cell(''); const p = document.createElement('span'); p.className = 'sg-pill sg-pill-' + r.onem; p.textContent = r.onem; s.append(p);
+    const st = cell(''); const sp = document.createElement('span'); sp.className = 'sg-st sg-st-' + r.durum; sp.textContent = r.durum; st.append(sp);
+    cell(r.varlik);
+    const t = parse(r.tespit); cell(t ? fmt(t) : r.tespit, 'sg-muted');
+    cell(r.sorumlu);
+    cell(sgDec(Number(r.mudahale_saat)), 'num');
+    tb.append(tr);
+  });
+});
+
+dash.draw('vulns', (tb) => {
+  const d = dash.data('zafiyetler');
+  tb.replaceChildren();
+  if (d.status !== 'ok') {
+    const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 5; td.className = 'sg-err';
+    td.textContent = d.status === 'error' ? 'Zafiyet verisi yüklenemedi.' : 'Yükleniyor…'; tr.append(td); tb.append(tr); return;
+  }
+  const max = d3.max(d.data, (r) => Number(r.acik)) || 1;
+  d.data.forEach((r) => {
+    const tr = document.createElement('tr');
+    const cell = (cls) => { const td = document.createElement('td'); if (cls) td.className = cls; tr.append(td); return td; };
+    const s = cell(); const p = document.createElement('span'); p.className = 'sg-pill sg-pill-' + r.onem; p.textContent = r.onem; s.append(p);
+    const a = cell('num'); a.append(document.createTextNode(sgInt(Number(r.acik))));
+    const bar = document.createElement('span'); bar.className = 'sg-mini sg-mini-' + r.onem; bar.style.width = Math.max(3, Number(r.acik) / max * 80) + 'px'; a.append(bar);
+    cell('num').textContent = sgInt(Number(r.son30_kapatilan));
+    cell('num').textContent = sgInt(Number(r.sla_gun));
+    const o = cell('num'); o.textContent = sgInt(Number(r.sla_asan)); if (Number(r.sla_asan) > 0 && (r.onem === 'Kritik' || r.onem === 'Yüksek')) o.className = 'num sg-bad';
+    tb.append(tr);
+  });
+});
+</script>
+
+</div>
+</body>
+</html>
